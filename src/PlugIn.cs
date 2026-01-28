@@ -66,6 +66,9 @@ namespace Landis.Extension.ClimateBDA
         /// </summary>
         public override void Initialize()
         {
+            Console.WriteLine("Attach process to Visual Studio for debugging and hit return.");
+            Console.ReadLine();
+
             reinitialized = false;
             MetadataHandler.InitializeMetadata(parameters.Timestep,
                parameters.MapNamesTemplate,
@@ -89,6 +92,10 @@ namespace Landis.Extension.ClimateBDA
             {
                 if (activeAgent == null)
                     PlugIn.ModelCore.UI.WriteLine("Agent Parameters NOT loading correctly.");
+
+                // read map of outbreak probability
+                activeAgent.ReadOutbreakMap();
+
                 activeAgent.TimeToNextEpidemic = TimeToNext(activeAgent, Timestep) + activeAgent.StartYear;
                 int timeOfNext = PlugIn.ModelCore.CurrentTime + activeAgent.TimeToNextEpidemic - activeAgent.TimeSinceLastEpidemic;
                 if (timeOfNext < Timestep)
@@ -313,8 +320,8 @@ namespace Landis.Extension.ClimateBDA
             el.Time = currentTime;
             el.ROS = ROS;
             el.AgentName = agent.AgentName;
-            el.DamagedSites = CurrentEvent.TotalSitesDamaged;
             el.CohortsKilled = CurrentEvent.CohortsKilled;
+            el.DamagedSites = CurrentEvent.TotalSitesDamaged;
             el.MeanSeverity = CurrentEvent.MeanSeverity;
             EventLog.AddObject(el);
             EventLog.WriteToFile();

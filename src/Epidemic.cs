@@ -152,7 +152,8 @@ namespace Landis.Extension.ClimateBDA
             SiteResources.SiteResourceDominance(agent, ROS);
             SiteResources.SiteResourceDominanceModifier(agent);
 
-            if(agent.Dispersal) {
+            if (agent.Dispersal)
+            {
                 //Asynchronous - Simulate Agent Dispersal
 
                 // Calculate Site Vulnerability without considering the Neighborhood
@@ -162,7 +163,8 @@ namespace Landis.Extension.ClimateBDA
 
                 Epicenters.NewEpicenters(agent, timestep);
 
-            } else
+            }
+            else
             {
                 //Synchronous:  assume that all Active sites can potentially be
                 //disturbed without regard to initial locations.
@@ -177,6 +179,18 @@ namespace Landis.Extension.ClimateBDA
 
             //Recalculate Site Vulnerability considering neighbors if necessary:
             SiteResources.SiteVulnerability(agent, ROS, agent.NeighborFlag);
+            
+            if (!agent.HasHadFirstDisturbance)
+            {
+                // for the first time through this, set the site vulnerability to the outbreak map probability
+                foreach (ActiveSite site in PlugIn.ModelCore.Landscape)
+                {
+                    agent.OutbreakZone[site] = Zone.Newzone;
+                    SiteVars.Vulnerability[site] = agent.OutbreakMapProbability[site];
+                }
+
+                agent.HasHadFirstDisturbance = true;
+            }
 
             CurrentEpidemic.DisturbSites(agent);
 
@@ -215,7 +229,10 @@ namespace Landis.Extension.ClimateBDA
 
                 double myRand = PlugIn.ModelCore.GenerateUniform();
 
-                if((agent.OutbreakZone[site] == Zone.Newzone || agent.OutbreakZone[site] == Zone.Lastzone)
+                //// use the outbreak map probability the first time the agent has a disturbance, otherwise use the calculated site vulnerability
+                //var outbreakProbability = agent.HasHadFirstDisturbance ? SiteVars.Vulnerability[site] : agent.OutbreakMapProbability[site];
+
+                if ((agent.OutbreakZone[site] == Zone.Newzone || agent.OutbreakZone[site] == Zone.Lastzone)
                     && SiteVars.Vulnerability[site] > myRand)
                 {
                     //PlugIn.ModelCore.Log.WriteLine("Zone={0}, agent.OutbreakZone={1}", Zone.Newzone.ToString(), agent.OutbreakZone[site]);
@@ -294,6 +311,9 @@ namespace Landis.Extension.ClimateBDA
             }
             if (this.totalSitesDamaged > 0)
                 this.meanSeverity = (double) totalSiteSeverity / (double) this.totalSitesDamaged;
+        
+            //// set flag indicating that the initial disturbance has occurred
+            //agent.HasHadFirstDisturbance = true;
         }
 
         //---------------------------------------------------------------------

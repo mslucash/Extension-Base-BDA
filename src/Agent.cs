@@ -5,6 +5,7 @@ using Landis.SpatialModeling;
 using Landis.Utilities;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 
 namespace Landis.Extension.ClimateBDA
 {
@@ -32,6 +33,7 @@ namespace Landis.Extension.ClimateBDA
         int TimeSinceLastEpidemic{get;set;}
         int TimeToNextEpidemic{get;set;}
         TemporalType TempType{get;set;}
+        string OutbreakMapName { get; set; }
         OutbreakPattern RandFunc{get;set;}
         SRDmode SRDmode{get;set;}
         double NormMean { get; set; }
@@ -84,6 +86,9 @@ namespace Landis.Extension.ClimateBDA
         List<IClimateModifier> ClimateModifiers { get; }
         ISiteVar<byte> Severity { get; set; }
         ISiteVar<Zone> OutbreakZone { get; set; }
+        ISiteVar<double> OutbreakMapProbability { get; set; }
+        void ReadOutbreakMap();
+        bool HasHadFirstDisturbance { get; set; }
     }
 }
 
@@ -105,6 +110,7 @@ namespace Landis.Extension.ClimateBDA
         private int timeSinceLastEpidemic;
         private int timeToNextEpidemic;
         private TemporalType tempType;
+        private string _outbreakMapName;
         private OutbreakPattern randFunc;
         private SRDmode srdMode;
         private double normMean;
@@ -237,6 +243,11 @@ namespace Landis.Extension.ClimateBDA
                 tempType = value;
             }
         }
+
+        public string OutbreakMapName { get { return _outbreakMapName; } set { string path = value; if (path.Trim(null).Length == 0) throw new InputValueException(path, $"\"{path}\" is not a valid path."); _outbreakMapName = value; } }
+
+        public bool HasHadFirstDisturbance { get; set; }
+
         //---------------------------------------------------------------------
         public OutbreakPattern RandFunc
         {
@@ -511,6 +522,8 @@ namespace Landis.Extension.ClimateBDA
                 outbreakZone = value;
             }
         }
+
+        public ISiteVar<double> OutbreakMapProbability { get; set; }
 
         //---------------------------------------------------------------------
         public bool Dispersal
@@ -788,7 +801,8 @@ namespace Landis.Extension.ClimateBDA
             dispersalNeighbors = new List<RelativeLocation>();
             resourceNeighbors = new List<RelativeLocationWeighted>();
             severity       = PlugIn.ModelCore.Landscape.NewSiteVar<byte>();
-            outbreakZone   = PlugIn.ModelCore.Landscape.NewSiteVar<Zone>();
+            outbreakZone = PlugIn.ModelCore.Landscape.NewSiteVar<Zone>();
+            OutbreakMapProbability = PlugIn.ModelCore.Landscape.NewSiteVar<double>();
             climateDataTable = new DataTable();
 
             for (int i = 0; i < sppCount; i++)
@@ -799,6 +813,60 @@ namespace Landis.Extension.ClimateBDA
             //   DistParameters[i] = new DistParameters();
         }
 
+        public void ReadOutbreakMap()
+        {
+            if (string.IsNullOrEmpty(OutbreakMapName))
+            {
+                // if no outbreak map is provided, set the outbreak map probabilities to 1.0
+                OutbreakMapProbability.ActiveSiteValues = 1.0;
+                return;
+            }
+
+            IInputRaster<DoublePixel> map = MakeDoubleMap(OutbreakMapName);
+
+            using (map)
+            {
+                DoublePixel pixel = map.BufferPixel;
+                foreach (Site site in PlugIn.ModelCore.Landscape.AllSites)
+                {
+                    map.ReadBufferPixel();
+                    double mapValue = pixel.MapCode.Value;
+                    if (site.IsActive)
+                    {
+                        if (mapValue < 0.0 || mapValue > 1.0)
+                            throw new InputValueException(mapValue.ToString(),
+                                                          "Outbreak value {0} is not between {1:0.0} and {2:0.0}. Site_Row={3:0}, Site_Column={4:0}",
+                                                          mapValue, 0.0, 1.0, site.Location.Row, site.Location.Column);
+                        OutbreakMapProbability[site] = mapValue;
+                    }
+                }
+            }
+        }
+
+        private static IInputRaster<DoublePixel> MakeDoubleMap(string path)
+        {
+            PlugIn.ModelCore.UI.WriteLine("  Read in data from {0}", path);
+
+            IInputRaster<DoublePixel> map;
+
+            try
+            {
+                map = PlugIn.ModelCore.OpenRaster<DoublePixel>(path);
+            }
+            catch (FileNotFoundException)
+            {
+                string mesg = string.Format("Error: The file {0} does not exist", path);
+                throw new System.ApplicationException(mesg);
+            }
+
+            if (map.Dimensions != PlugIn.ModelCore.Landscape.Dimensions)
+            {
+                string mesg = string.Format("Error: The input map {0} does not have the same dimension (row, column) as the scenario ecoregions map", path);
+                throw new System.ApplicationException(mesg);
+            }
+
+            return map;
+        }
     }
 
     public class RelativeLocationWeighted

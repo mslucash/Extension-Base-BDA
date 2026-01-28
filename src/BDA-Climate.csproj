@@ -8,7 +8,7 @@
     <AssemblyCopyright>Landis-II-Foundation</AssemblyCopyright>
     <AssemblyCompany>Landis-II-Foundation</AssemblyCompany>
     <AssemblyVersion>5.0</AssemblyVersion>
-	  <Version>5.0</Version>
+	  <Version>5.1</Version>
 	  <FileVersion>5.0.0.0</FileVersion>
 	  <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -18,7 +18,7 @@
     <PackageProjectUrl>http://www.landis-ii.org</PackageProjectUrl>
     <NeutralLanguage>English</NeutralLanguage>
     <Authors>Landis-II-Foundation</Authors>
-    <Product>Landis.Extension.ClimateBDA-v4</Product>
+    <Product>Landis.Extension.ClimateBDA-v5</Product>
     <Copyright>Landis-II-Foundation</Copyright>
     <PackageTags>LANDIS-II;Landis;Extension;Biological disturbance agents</PackageTags>
     <Description></Description>

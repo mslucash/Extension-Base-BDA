@@ -71,6 +71,12 @@ namespace Landis.Extension.ClimateBDA
             else
                 agentParameters.EndYear = PlugIn.ModelCore.EndTime;
 
+            var outbreakMapName = new InputVar<string>("OutbreakMap");
+            if (ReadOptionalVar(outbreakMapName))
+            {
+                agentParameters.OutbreakMapName = outbreakMapName.Value;
+            }
+
             InputVar<OutbreakPattern> rf = new InputVar<OutbreakPattern>("OutbreakPattern");
             ReadVar(rf);
             agentParameters.RandFunc = rf.Value;
