@@ -817,8 +817,8 @@ namespace Landis.Extension.ClimateBDA
         {
             if (string.IsNullOrEmpty(OutbreakMapName))
             {
-                // if no outbreak map is provided, set the outbreak map probabilities to 1.0
-                OutbreakMapProbability.ActiveSiteValues = 1.0;
+                //// if no outbreak map is provided, set the outbreak map probabilities to 1.0
+                //OutbreakMapProbability.ActiveSiteValues = 1.0;
                 return;
             }
 

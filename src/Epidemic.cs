@@ -182,14 +182,17 @@ namespace Landis.Extension.ClimateBDA
             
             if (!agent.HasHadFirstDisturbance)
             {
-                // for the first time through this, set the site vulnerability to the outbreak map probability
-                foreach (ActiveSite site in PlugIn.ModelCore.Landscape)
-                {
-                    agent.OutbreakZone[site] = Zone.Newzone;
-                    SiteVars.Vulnerability[site] = agent.OutbreakMapProbability[site];
-                }
-
                 agent.HasHadFirstDisturbance = true;
+
+                // for the first time through this, set the site vulnerability to the outbreak map probability, if it exists
+                if (!string.IsNullOrEmpty(agent.OutbreakMapName))
+                {
+                    foreach (ActiveSite site in PlugIn.ModelCore.Landscape)
+                    {
+                        agent.OutbreakZone[site] = Zone.Newzone;
+                        SiteVars.Vulnerability[site] = agent.OutbreakMapProbability[site];
+                    }
+                }
             }
 
             CurrentEpidemic.DisturbSites(agent);
