@@ -88,7 +88,6 @@ namespace Landis.Extension.ClimateBDA
         ISiteVar<Zone> OutbreakZone { get; set; }
         ISiteVar<double> OutbreakMapProbability { get; set; }
         void ReadOutbreakMap();
-        bool HasHadFirstDisturbance { get; set; }
     }
 }
 
@@ -245,8 +244,6 @@ namespace Landis.Extension.ClimateBDA
         }
 
         public string OutbreakMapName { get { return _outbreakMapName; } set { string path = value; if (path.Trim(null).Length == 0) throw new InputValueException(path, $"\"{path}\" is not a valid path."); _outbreakMapName = value; } }
-
-        public bool HasHadFirstDisturbance { get; set; }
 
         //---------------------------------------------------------------------
         public OutbreakPattern RandFunc

@@ -3,6 +3,7 @@
 
 using Landis.SpatialModeling;
 using System.Collections.Generic;
+using System.Linq;
 
 
 namespace Landis.Extension.ClimateBDA
@@ -136,20 +137,33 @@ namespace Landis.Extension.ClimateBDA
             //If necessary, create list from scratch without
             //consideration of previous outbreaks.
             if (firstIteration)
+            {
+                if (string.IsNullOrEmpty(agent.OutbreakMapName))
                 {
-                int i, j;
+                    // randomly add epicenters from active sites within the full active landscape
+                    int i, j;
 
-                while (epicenterNum < oldEpicenterNum)
-                {
-                    i = (int)(PlugIn.ModelCore.GenerateUniform() * numRows) + 1;
-                    j = (int)(PlugIn.ModelCore.GenerateUniform() * numCols) + 1;
-
-                    Site site = PlugIn.ModelCore.Landscape[i, j];
-                    if (site != null && site.IsActive)
+                    while (epicenterNum < oldEpicenterNum)
                     {
-                        newSiteList.Add(site.Location);
-                        epicenterNum++;
+                        i = (int)(PlugIn.ModelCore.GenerateUniform() * numRows) + 1;
+                        j = (int)(PlugIn.ModelCore.GenerateUniform() * numCols) + 1;
+
+                        Site site = PlugIn.ModelCore.Landscape[i, j];
+                        if (site != null && site.IsActive)
+                        {
+                            newSiteList.Add(site.Location);
+                            epicenterNum++;
+                        }
                     }
+                }
+                else
+                {
+                    // randomly add epicenters from active sites within the initial outbreak map
+                    //  agent.OutbreakMapProbability[site] is non-zero only for active sites in the initial outbreak map
+                    var initialOutbreakMapSites = PlugIn.ModelCore.Landscape.AllSites.Where(x => agent.OutbreakMapProbability[x] > 0.0).ToList();
+                    var epidemicSites = initialOutbreakMapSites.Count < oldEpicenterNum ? initialOutbreakMapSites : PlugIn.ModelCore.shuffle(initialOutbreakMapSites).GetRange(0, oldEpicenterNum);
+                    newSiteList.AddRange(epidemicSites.Select(x => x.Location));
+                    epicenterNum = newSiteList.Count;
                 }
                 //PlugIn.ModelCore.Log.WriteLine("   No Prior Outbreaks OR No available sites within prior outbreaks.  EpicenterNum = {0}.", newSiteList.Count);
             }

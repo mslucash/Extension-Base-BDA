@@ -180,21 +180,6 @@ namespace Landis.Extension.ClimateBDA
             //Recalculate Site Vulnerability considering neighbors if necessary:
             SiteResources.SiteVulnerability(agent, ROS, agent.NeighborFlag);
             
-            if (!agent.HasHadFirstDisturbance)
-            {
-                agent.HasHadFirstDisturbance = true;
-
-                // for the first time through this, set the site vulnerability to the outbreak map probability, if it exists
-                if (!string.IsNullOrEmpty(agent.OutbreakMapName))
-                {
-                    foreach (ActiveSite site in PlugIn.ModelCore.Landscape)
-                    {
-                        agent.OutbreakZone[site] = Zone.Newzone;
-                        SiteVars.Vulnerability[site] = agent.OutbreakMapProbability[site];
-                    }
-                }
-            }
-
             CurrentEpidemic.DisturbSites(agent);
 
             return CurrentEpidemic;
@@ -231,9 +216,6 @@ namespace Landis.Extension.ClimateBDA
                 this.random = 0;
 
                 double myRand = PlugIn.ModelCore.GenerateUniform();
-
-                //// use the outbreak map probability the first time the agent has a disturbance, otherwise use the calculated site vulnerability
-                //var outbreakProbability = agent.HasHadFirstDisturbance ? SiteVars.Vulnerability[site] : agent.OutbreakMapProbability[site];
 
                 if ((agent.OutbreakZone[site] == Zone.Newzone || agent.OutbreakZone[site] == Zone.Lastzone)
                     && SiteVars.Vulnerability[site] > myRand)
